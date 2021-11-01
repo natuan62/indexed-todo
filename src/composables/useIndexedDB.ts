@@ -25,9 +25,6 @@ const useIndexedDB = (table: string) => {
             autoIncrement: true,
             keyPath: 'id',
           });
-          objectStore.createIndex('name', 'name', { unique: false });
-          objectStore.createIndex('email', 'email', { unique: false });
-          objectStore.createIndex('isEdit', 'isEdit', { unique: false });
         }
       };
     });
@@ -53,8 +50,8 @@ const useIndexedDB = (table: string) => {
       const store = transaction.objectStore('users');
       const result: Todo[] = [];
       store.openCursor().onsuccess = (event: any) => {
-        console.log('get() onsuccess');
         const cursor = event.target.result;
+        console.log('get() onsuccess', cursor);
         if (cursor) {
           result.push(cursor.value);
           cursor.continue();
@@ -70,14 +67,31 @@ const useIndexedDB = (table: string) => {
       };
     });
   };
+  
+  const getById = async (id: number): Promise<Todo> => {
+    database.value = await connect();
+    return new Promise((resolve, reject) => {
+      const transaction = database.value.transaction('users', 'readonly');
+      const store = transaction.objectStore('users');
+      const request = store.get(id);
+      request.onsuccess = (event: any) => {
+        console.log('getById() onsuccess', request.result);
+        resolve(request.result as Todo);
+      };
+      request.onerror = () => {
+        console.log('getById() error');
+        reject({});
+      };
+    });
+  };
 
   const create = (data: Todo) => {
     const rawData = toRaw(data);
     return new Promise((resolve, reject) => {
       const request = database.value.transaction(['users'], 'readwrite').objectStore('users').add(rawData);
       request.onsuccess = (event: any) => {
-        console.log('create() onsuccess', event.target.result);
         const result = { ...rawData, id: event.target.result };
+        console.log('create() onsuccess', event.target.result, result);
         resolve(result);
       };
       request.onerror = () => {
@@ -114,6 +128,7 @@ const useIndexedDB = (table: string) => {
     connect,
     create,
     get,
+    getById,
     count,
     set,
     remove,

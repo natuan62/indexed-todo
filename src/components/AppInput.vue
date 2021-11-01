@@ -1,6 +1,6 @@
 <template>
   <span v-if="title">{{ title }}</span>
-  <input v-bind="$attrs" type="text" v-model="inputValue" />
+  <input v-bind="$attrs" type="text" v-model="inputValue" @keyup.enter="$emit('enter-press')"/>
 </template>
 
 <script lang="ts">
@@ -22,6 +22,7 @@ export default defineComponent({
       type: [String, Number],
     },
   },
+  emits: ['enter-press'],
   setup(props: Prop, { emit }: SetupContext) {
     const inputValue = computed({
       get: () => props.modelValue,

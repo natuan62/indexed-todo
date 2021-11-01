@@ -2,7 +2,7 @@
   <h1>TODO - Indexed DB</h1>
   <div>
     <AppInput title="name" v-model="record.name" />
-    <AppInput title="email" v-model="record.email" />
+    <AppInput title="email" v-model="record.email" @enter-press="addTodo()" />
     <button @click="addTodo()">Add Todo</button>
   </div>
   <hr />
