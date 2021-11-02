@@ -30,19 +30,6 @@ const useIndexedDB = (table: string) => {
     });
   };
 
-  const count = async (): Promise<number> => {
-    database.value = await connect();
-    return new Promise((resolve, reject) => {
-      const transaction = database.value.transaction('users', 'readonly');
-      const objectStore = transaction.objectStore('users');
-      const countRequest = objectStore.count();
-      countRequest.onsuccess = (event: any) => {
-        console.log('countRequest.result', countRequest.result);
-        resolve(countRequest.result as number);
-      };
-    });
-  };
-
   const get = async (): Promise<Todo[]> => {
     database.value = await connect();
     return new Promise((resolve, reject) => {
@@ -67,7 +54,37 @@ const useIndexedDB = (table: string) => {
       };
     });
   };
-  
+
+  const create = (data: Todo) => {
+    const rawData = toRaw(data);
+    return new Promise((resolve, reject) => {
+      const transaction = database.value.transaction(['users'], 'readwrite');
+      const store = transaction.objectStore('users');
+      const request = store.add(rawData);
+      request.onsuccess = (event: any) => {
+        const result = { ...rawData, id: event.target.result };
+        console.log('create() onsuccess', event.target.result, result);
+        resolve(result);
+      };
+      request.onerror = () => {
+        console.log('create() onerror');
+      };
+    });
+  };
+
+  const count = async (): Promise<number> => {
+    database.value = await connect();
+    return new Promise((resolve, reject) => {
+      const transaction = database.value.transaction('users', 'readonly');
+      const store = transaction.objectStore('users');
+      const countRequest = store.count();
+      countRequest.onsuccess = (event: any) => {
+        console.log('countRequest.result', countRequest.result);
+        resolve(countRequest.result as number);
+      };
+    });
+  };
+
   const getById = async (id: number): Promise<Todo> => {
     database.value = await connect();
     return new Promise((resolve, reject) => {
@@ -85,25 +102,12 @@ const useIndexedDB = (table: string) => {
     });
   };
 
-  const create = (data: Todo) => {
-    const rawData = toRaw(data);
-    return new Promise((resolve, reject) => {
-      const request = database.value.transaction(['users'], 'readwrite').objectStore('users').add(rawData);
-      request.onsuccess = (event: any) => {
-        const result = { ...rawData, id: event.target.result };
-        console.log('create() onsuccess', event.target.result, result);
-        resolve(result);
-      };
-      request.onerror = () => {
-        console.log('create() onerror');
-      };
-    });
-  };
-
   const set = (data: Todo) => {
     return new Promise((resolve, reject) => {
       const rawData = toRaw(data);
-      const request = database.value.transaction(['users'], 'readwrite').objectStore('users').put(rawData);
+      const transaction = database.value.transaction(['users'], 'readwrite');
+      const store = transaction.objectStore('users');
+      const request = store.put(rawData);
       request.onsuccess = function (event: any) {
         const result = { ...rawData, id: event.target.result };
         console.log('set() successfully', result);
@@ -117,9 +121,12 @@ const useIndexedDB = (table: string) => {
 
   const remove = (id: number) => {
     return new Promise((resolve, reject) => {
-      const request = database.value.transaction(['users'], 'readwrite').objectStore('users').delete(id);
-      request.onsuccess = function (event: any) {
-        console.log('remove() successfully', event);
+      const transaction = database.value.transaction(['users'], 'readwrite');
+      const store = transaction.objectStore('users');
+      const request = store.delete(id);
+      request.onsuccess = function () {
+        console.log('remove() successfully');
+        resolve(id);
       };
     });
   };
