@@ -22,7 +22,7 @@ export default defineComponent({
       type: [String, Number],
     },
   },
-  emits: ['enter-press'],
+  emits: ['enter-press', 'update:modelValue'],
   setup(props: Prop, { emit }: SetupContext) {
     const inputValue = computed({
       get: () => props.modelValue,
